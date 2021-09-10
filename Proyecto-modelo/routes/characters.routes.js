@@ -13,7 +13,6 @@ router.get('/characters',(req, res)=>{
     CharactersAPI
     .getAllCharacters()
     .then((allCharacters) => {
-        console.log(allCharacters.data.results[0])
         res.render(`characters/list`, {characters: allCharacters.data.results} )
     
     })
@@ -41,17 +40,27 @@ const idToCheck = req.body.apiId;
                 })
                 .catch(err => console.log(err))
         } else {
-			//Comprobar si ese apiId ya esta en User/favorites
 			User
-			.findByIdAndUpdate(req.user._id,{$push : {favorites : charArray[0]._id}})
-			.then(()=>{
-				res.redirect("/characters")
-			})
+            .findById(req.user._id)
+            .then((user)=>{
+                if (!user.favorites.includes(charArray[0]._id)){
+                    User
+                    .findByIdAndUpdate(req.user._id,{$push : {favorites : charArray[0]._id}})
+                    .then(()=>{
+                        res.redirect("/characters")
+                    })
+                }else{res.redirect("/characters")}
+            })
+            .catch((err)=>{
+            console.log(err)
+            })
+            
+            
+            
 		}
 	}) 
 })
 
-// { field: { $nin: [ value1, value2, ..... , valueN ] } } ???
 
 router.post("/delete-favorite",isLoggedIn,(req,res)=>{
     const {id} = req.body
@@ -61,5 +70,12 @@ router.post("/delete-favorite",isLoggedIn,(req,res)=>{
     })
     .catch(err => console.log(err))
 })
+
+/**
+ * ---arrays
+{ field: { $in: [ value1, value2, ..... , valueN ] } }
+{ field: { $nin: [ value1, value2, ..... , valueN ] } }
+{ field: { $all: [ value1, value2, ..... , valueN ] } }
+ */
 
 module.exports = router;
